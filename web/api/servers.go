@@ -114,6 +114,8 @@ func registerServers(g *gin.RouterGroup) {
 	g.OPTIONS("/:serverId/backup", response.CreateOptions("GET"))
 	g.POST("/:serverId/backup/create", middleware.RequiresPermission(pufferpanel.ScopeServerBackupCreate), middleware.ResolveServerPanel, createBackup)
 	g.OPTIONS("/:serverId/backup/create", response.CreateOptions("POST"))
+	g.DELETE("/:serverId/backup/:backupId", middleware.RequiresPermission(pufferpanel.ScopeServerBackupDelete), middleware.ResolveServerPanel, deleteBackup)
+	g.OPTIONS("/:serverId/backup/:backupId", response.CreateOptions("DELETE"))
 
 	p := g.Group("/:serverId/socket")
 	{
@@ -1006,7 +1008,7 @@ func getBackups(c *gin.Context) {
 // @Description Creates a full backup of the server
 // @Success 204 {object} nil
 // @Param id path string true "Server ID"
-// @Param name body string true "name of the backup"
+// @Query name body string true "name of the backup"
 // @Router /api/servers/{id}/backup/create [post]
 // @Security OAuth2Application[server.backup.create]
 func createBackup(c *gin.Context) {
@@ -1034,7 +1036,55 @@ func createBackup(c *gin.Context) {
 	}
 
 	backup := &models.Backup{Name: name, FileName: responseData.BackupFileName, FileSize: responseData.FileSize, ServerID: server.Identifier}
-	bs.Create(backup)
+	err = bs.Create(backup)
+	if response.HandleError(c, err, http.StatusBadRequest) {
+		return
+	}
+
+	c.Status(http.StatusOK)
+}
+
+// @Summary Delete backup
+// @Description Removes the backup and its assosicated file
+// @Success 204 {object} nil
+// @Param id path string true "Server ID"
+// @Param backupId body string true "Backup ID"
+// @Router /api/servers/{id}/backup/Delete/{backupId} [delete]
+// @Security OAuth2Application[server.backup.delete]
+func deleteBackup(c *gin.Context) {
+	server := getServerFromGin(c)
+	db := middleware.GetDatabase(c)
+	ns := &services.Node{DB: db}
+	bs := &services.Backup{DB: db}
+	node := &server.Node
+
+	var err error
+	var backupId uint
+	if backupId, err = cast.ToUintE(c.Param("backupId")); err != nil {
+		response.HandleError(c, err, http.StatusBadRequest)
+		return
+	}
+
+	backup, err := bs.GetById(backupId)
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+		return
+	}
+	if backup == nil {
+		c.Status(http.StatusNotFound)
+		return
+	}
+
+	resolvedPath := "/daemon/server/" + server.Identifier + "/backup" + "?fileName=" + backup.FileName
+
+	_, err = ns.CallNode(node, "DELETE", resolvedPath, nil, nil)
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+		return
+	}
+
+	err = bs.Delete(backupId)
+	if response.HandleError(c, err, http.StatusBadRequest) {
+		return
+	}
 
 	c.Status(http.StatusOK)
 }

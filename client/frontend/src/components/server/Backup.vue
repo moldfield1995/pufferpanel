@@ -1,6 +1,7 @@
 <script setup>
 import { ref, inject, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+const events = inject('events')
 import Loader from '@/components/ui/Loader.vue'
 import Btn from '@/components/ui/Btn.vue'
 import Icon from '@/components/ui/Icon.vue'
@@ -16,21 +17,30 @@ const props = defineProps({
 const backups = ref(null)
 const backupName = ref("")
 const backupRunning = ref(false)
+const loading = ref(false)
 
 onMounted(async () => {
-  backups.value = await props.server.getBackups()
+  await loadBackups()
 })
+
+async function loadBackups() {
+  backups.value = await props.server.getBackups()
+}
 
 function canBackup() {
   return backupRunning.value
+}
+
+function isLoading() {
+  return !Array.isArray(backups.value) || loading.value
 }
 
 async function save() {
   try {
     backupRunning.value = true
     await props.server.createBackup(backupName.value)
-    toast.success(t('servers.SettingsSaved'))
-    backups.value = await props.server.getBackups()
+    toast.success(t('backup.Created'))
+    await loadBackups()
   }
   finally {
     backupRunning.value = false
@@ -47,13 +57,49 @@ function formatFileSize(size) {
   return numFormat.format(size / Math.pow(2, 40)) + ' TiB'
 }
 
-function restore(file) {
-  console.log("restore", file);
-
+async function restore(file) {
+  try {
+    loading.value = true
+    console.log("restore", file);
+    toast.success(t('backup.Restored'))
+    await loadBackups()
+  }
+  finally {
+    loading.value = false
+  }
 }
 
-function deleteRestore(file) {
-  console.log("delete", file)
+function promptDelete(file){
+  events.emit(
+      'confirm',
+      {
+        title: t('backup.DeletePrompt'),
+        body: t('backup.DeletePromptBody'),
+      },
+      {
+        text: t('backup.Delete'),
+        icon: 'remove',
+        color: 'error',
+        action: () => {
+          deleteRestore(file)
+        }
+      },
+      {
+        color: 'primary'
+      }
+    )
+}
+
+async function deleteRestore(file) {
+  try {
+    loading.value = true
+    await props.server.deleteBackup(file.id);
+    toast.success(t('backup.Deleted'))
+    await loadBackups()
+  }
+  finally {
+    loading.value = false
+  }
 }
 console.log(locale.value.replace('_', '-'))
 // date-fns localization approach takes importing an object per locale
@@ -74,7 +120,8 @@ const intl = new Intl.DateTimeFormat(
     <div v-if="server.hasScope('server.backup.create')">
       <text-field v-model="backupName" :label="t('backup.Name')" />
       <btn color="primary" :disabled="canBackup()" @click="save()">
-        <icon v-if="!canBackup()" name="plus" /> <icon v-else name="loading" spin /> {{ t('backup.Create') }}
+        <icon v-if="!canBackup()" name="plus" />
+        <icon v-else name="loading" spin /> {{ t('backup.Create') }}
       </btn>
     </div>
 
@@ -84,7 +131,7 @@ const intl = new Intl.DateTimeFormat(
       </div>
     </div>
     <div class="backup-list">
-      <loader v-if="!Array.isArray(backups)" />
+      <loader v-if="isLoading()" />
       <!-- eslint-disable-next-line vue/no-template-shadow -->
       <div v-for="backup in backups" v-else :key="backup.id" tabindex="0" class="backup">
         <icon class="file-icon" name="file" />
@@ -102,7 +149,7 @@ const intl = new Intl.DateTimeFormat(
           </btn>
         </a>
         <btn v-if="server.hasScope('server.backup.delete')" tabindex="-1" variant="icon" :tooltip="t('backup.Delete')"
-          @click.stop="deleteRestore(backup)">
+          @click.stop="promptDelete(backup)">
           <icon name="remove" />
         </btn>
       </div>

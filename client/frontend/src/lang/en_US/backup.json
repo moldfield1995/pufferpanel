@@ -1,9 +1,15 @@
 {
     "Backup" : "Backup",
     "Name" : "Name",
-    "Create": "Create Backup",
-    "BackupsHeader": "Available Backups",
+    "Create": "Create backup",
+    "Created":"Backup created successfully",
+    "BackupsHeader": "Available backups",
     "Restore": "Restore",
+    "Restored":"Backup restored successfully",
     "Download": "Download",
-    "Delete": "Delete"
+    "Delete": "Delete",
+    "Deleted":"Backup deleted successfully",
+    "DeletePrompt":"Permanently delete backup",
+    "DeletePromptBody":"Do you really want to delete the backup permanently? "
+
 }

@@ -639,6 +639,22 @@ func (p *Server) CreateBackup() (string, int64, error) {
 	return backupFileName, fileSize, err
 }
 
+func (p *Server) DeleteBackup(fileName string) error {
+	backupDirectory := p.RunningEnvironment.GetBackupDirectory()
+	if backupDirectory == "" {
+		return pufferpanel.ErrSettingNotConfigured("backupDirectory")
+	}
+
+	backupfile := path.Join(backupDirectory, fileName)
+
+	err := os.Remove(backupfile)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+
+	return nil
+}
+
 func (p *Server) valid() bool {
 	//we need a type at least, this is a safe check
 	if p.Type.Type == "" {

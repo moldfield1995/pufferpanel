@@ -245,6 +245,11 @@ export class ServerApi {
     return true
   }
 
+  async deleteBackup(id, backupId) {
+    await this._api.delete(`/api/servers/${id}/backup/${backupId}`)
+    return true
+  }
+
   async deleteFile(id, path) {
     if (path.indexOf('/') === 0) path = path.substring(1)
     await this._api.delete(this.getFileUrl(id, path))
@@ -522,6 +527,10 @@ class Server {
 
   async createBackup(name){
     return await this._api.server.createBackup(this.id, name)
+  }
+
+  async deleteBackup(backupId){
+    return await this._api.server.deleteBackup(this.id, backupId)
   }
 
   async deleteFile(path) {

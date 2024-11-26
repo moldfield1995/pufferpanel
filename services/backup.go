@@ -23,6 +23,19 @@ func (bs *Backup) GetAllBakcupsForServer(serverID string) ([]*models.Backup, err
 	return records, err
 }
 
+func (bs *Backup) GetById(id uint) (*models.Backup, error) {
+	var record *models.Backup
+	query := bs.DB
+	query = query.Where(&models.Backup{ID: id})
+
+	err := query.First(&record).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return record, err
+}
+
 func (bs *Backup) Create(model *models.Backup) error {
 	res := bs.DB.Create(model)
 

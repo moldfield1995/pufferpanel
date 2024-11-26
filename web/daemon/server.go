@@ -98,6 +98,7 @@ func RegisterServerRoutes(e *gin.RouterGroup) {
 		l.POST("/:serverId/extract/*filename", middleware.ResolveServerNode, extract)
 
 		l.POST("/:serverId/backup/create", middleware.ResolveServerNode, createBackup)
+		l.DELETE("/:serverId/backup", middleware.ResolveServerNode, deleteBackup)
 
 		l.HEAD("/:serverId/query", middleware.ResolveServerNode, canQueryServer)
 		l.GET("/:serverId/query", middleware.ResolveServerNode, queryServer)
@@ -821,7 +822,6 @@ func extract(c *gin.Context) {
 // @Description Creates a full backup of the server
 // @Success 204 {object} nil
 // @Param id path string true "Server ID"
-// @Param name body string true "name of the backup"
 // @Router /api/servers/{id}/backup/create [post]
 // @Security OAuth2Application[server.backup.create]
 func createBackup(c *gin.Context) {
@@ -831,6 +831,25 @@ func createBackup(c *gin.Context) {
 	if response.HandleError(c, err, http.StatusInternalServerError) {
 	} else {
 		c.JSON(http.StatusOK, &pufferpanel.ServerBackupResponse{BackupFileName: backupFileName, FileSize: fileSize})
+	}
+}
+
+// @Summary Create backup
+// @Description Creates a full backup of the server
+// @Success 204 {object} nil
+// @Param id path string true "Server ID"
+// @Param fileName path string true "Server ID"
+// @Router /api/servers/{id}/backup/create [post]
+// @Security OAuth2Application[server.backup.create]
+func deleteBackup(c *gin.Context) {
+	server := getServerFromGin(c)
+	fileName := c.Query("fileName")
+	logging.Info.Print("Request to Server to delete file")
+	err := server.DeleteBackup(fileName)
+
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+	} else {
+		c.Status(http.StatusOK)
 	}
 }
 
