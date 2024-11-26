@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"encoding/json"
 	"fmt"
+	uuid "github.com/gofrs/uuid/v5"
 	"github.com/mholt/archiver/v3"
 	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/conditions"
@@ -15,6 +16,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"sync"
@@ -599,6 +601,42 @@ func (p *Server) ArchiveItems(sourceFiles []string, destination string) error {
 
 func (p *Server) Extract(source, destination string) error {
 	return files.Extract(p.GetFileServer(), source, destination, "*", false, nil)
+}
+
+func (p *Server) CreateBackup() (string, int64, error) {
+	files := []string{p.GetFileServer().Prefix()}
+
+	backupDirectory := p.RunningEnvironment.GetBackupDirectory()
+	if backupDirectory == "" {
+		return "", 0, pufferpanel.ErrSettingNotConfigured("backupDirectory")
+	}
+	_, err := os.Stat(backupDirectory)
+	if err != nil && os.IsNotExist(err) {
+		err = os.Mkdir(backupDirectory, 0755)
+		if err != nil && !os.IsExist(err) {
+			return "", 0, err
+		}
+	}
+
+	backupId, err := uuid.NewV4()
+	if err != nil {
+		return "", 0, err
+	}
+	backupFileName := backupId.String() + ".tar.gz"
+	backupfile := path.Join(backupDirectory, backupFileName)
+
+	err = pufferpanel.Compress(nil, backupfile, files)
+	if err != nil {
+		return "", 0, err
+	}
+
+	file, err := os.Stat(backupfile)
+	if err != nil {
+		return "", 0, err
+	}
+
+	fileSize := file.Size()
+	return backupFileName, fileSize, err
 }
 
 func (p *Server) valid() bool {

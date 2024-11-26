@@ -57,7 +57,7 @@ func main() {
 
 		server := servers.CreateProgram()
 
-		env, err := servers.CreateEnvironment("host", ".", server.Server)
+		env, err := servers.CreateEnvironment("host", ".", "", server.Server)
 		if err != nil {
 			results[test.ProjectId] = err
 			continue

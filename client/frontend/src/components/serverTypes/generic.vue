@@ -39,6 +39,10 @@ const Sftp = defineAsyncComponent({
   loader: () => import('../server/Sftp.vue'),
   loadingComponent: Loader
 })
+const Backup = defineAsyncComponent({
+  loader: () => import('../server/Backup.vue'),
+  loadingComponent: Loader
+})
 const Admin = defineAsyncComponent({
   loader: () => import('../server/Admin.vue'),
   loadingComponent: Loader
@@ -165,6 +169,15 @@ onUnmounted(() => {
         hotkey="t 6"
       >
         <sftp :server="server" />
+      </tab>
+      <tab
+        v-if="server.hasScope('server.backup.view')"
+        id="backups"
+        :title="t('backup.Backup')"
+        icon="backup"
+        hotkey="t 7"
+      >
+        <backup :server="server" />
       </tab>
       <tab
         v-if="server.hasScope('server.definition.view') || server.hasScope('server.delete')"

@@ -110,6 +110,11 @@ func registerServers(g *gin.RouterGroup) {
 	g.POST("/:serverId/extract/*filename", middleware.RequiresPermission(scopes.ScopeServerFileEdit), middleware.ResolveServerPanel, proxyServerRequest)
 	g.OPTIONS("/:serverId/extract/*filename", response.CreateOptions("POST"))
 
+	g.GET("/:serverId/backup", middleware.RequiresPermission(pufferpanel.ScopeServerBackupView), middleware.ResolveServerPanel, getBackups)
+	g.OPTIONS("/:serverId/backup", response.CreateOptions("GET"))
+	g.POST("/:serverId/backup/create", middleware.RequiresPermission(pufferpanel.ScopeServerBackupCreate), middleware.ResolveServerPanel, createBackup)
+	g.OPTIONS("/:serverId/backup/create", response.CreateOptions("POST"))
+
 	p := g.Group("/:serverId/socket")
 	{
 		p.GET("", middleware.RequiresPermission(scopes.ScopeServerView), cors.New(cors.Config{
@@ -976,6 +981,62 @@ func editServerDataAdmin(c *gin.Context) {
 	}
 
 	proxyServerRequest(c)
+}
+
+// @Summary Gets servers backups
+// @Description Gets all backups made on this server
+// @Success 200 {object} models.Backup
+// @Param id path string true "Server ID"
+// @Router /api/servers/{id}/backup [get]
+// @Security OAuth2Application[server.backup.view]
+func getBackups(c *gin.Context) {
+	server := getServerFromGin(c)
+	db := middleware.GetDatabase(c)
+	bs := &services.Backup{DB: db}
+
+	records, err := bs.GetAllBakcupsForServer(server.Identifier)
+
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+	} else {
+		c.JSON(http.StatusOK, records)
+	}
+}
+
+// @Summary Create backup
+// @Description Creates a full backup of the server
+// @Success 204 {object} nil
+// @Param id path string true "Server ID"
+// @Param name body string true "name of the backup"
+// @Router /api/servers/{id}/backup/create [post]
+// @Security OAuth2Application[server.backup.create]
+func createBackup(c *gin.Context) {
+	server := getServerFromGin(c)
+	db := middleware.GetDatabase(c)
+	ns := &services.Node{DB: db}
+	bs := &services.Backup{DB: db}
+	name := c.Query("name")
+	node := &server.Node
+
+	resolvedPath := "/daemon/server/" + strings.TrimPrefix(c.Request.URL.Path, "/api/servers/")
+	if c.Request.URL.RawQuery != "" {
+		resolvedPath += "?" + c.Request.URL.RawQuery
+	}
+
+	callResponse, err := ns.CallNode(node, c.Request.Method, resolvedPath, c.Request.Body, c.Request.Header)
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+		return
+	}
+
+	responseData := &pufferpanel.ServerBackupResponse{}
+	err = json.NewDecoder(callResponse.Body).Decode(responseData)
+	if response.HandleError(c, err, http.StatusBadRequest) {
+		return
+	}
+
+	backup := &models.Backup{Name: name, FileName: responseData.BackupFileName, FileSize: responseData.FileSize, ServerID: server.Identifier}
+	bs.Create(backup)
+
+	c.Status(http.StatusOK)
 }
 
 func getFromData(variables map[string]pufferpanel.Variable, key string) (result interface{}, exists bool) {

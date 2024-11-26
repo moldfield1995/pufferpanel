@@ -92,7 +92,7 @@ func LoadFromData(id string, source []byte) (*Server, error) {
 		}
 	}
 
-	data.RunningEnvironment, err = CreateEnvironment(environmentType, config.ServersFolder.Value(), data.Server)
+	data.RunningEnvironment, err = CreateEnvironment(environmentType, config.ServersFolder.Value(), config.BackupsFolder.Value(), data.Server)
 	if err != nil {
 		return nil, err
 	}

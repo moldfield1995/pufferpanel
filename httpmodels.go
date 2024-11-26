@@ -64,3 +64,8 @@ type ServerFlags struct {
 	AutoRestartOnCrash    *bool `json:"autoRestartOnCrash,omitempty"`
 	AutoRestartOnGraceful *bool `json:"autoRestartOnGraceful,omitempty"`
 } //@name ServerFlags
+
+type ServerBackupResponse struct {
+	BackupFileName string `json:"backupFileName"`
+	FileSize       int64  `json:"fileSize"`
+} //@name ServerBackup

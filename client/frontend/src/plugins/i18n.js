@@ -35,7 +35,7 @@ export default async () => {
 }
 
 const rtl = ['ar_SA', 'he_IL']
-const files = ['common', 'env', 'errors', 'files', 'hotkeys', 'nodes', 'oauth', 'operators', 'scopes', 'servers', 'settings', 'templates', 'users']
+const files = ['common', 'env', 'errors', 'files', 'hotkeys', 'nodes', 'oauth', 'operators', 'scopes', 'servers', 'settings', 'templates', 'users','backup']
 export async function updateLocale(locale, save = true) {
   if (save) localStorage.setItem('locale', locale)
   const messages = {}

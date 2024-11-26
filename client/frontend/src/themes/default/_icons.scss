@@ -6760,6 +6760,12 @@ $mdi-icons: (
 .icon-search {
   @include icon-name(magnify);
 }
+.icon-backup {
+  @include icon-name(backup-restore);
+}
+.icon-restore {
+  @include icon-name(restore);
+}
 html[dir="ltr"] {
   .icon-back {
     @include icon-name(chevron-left);

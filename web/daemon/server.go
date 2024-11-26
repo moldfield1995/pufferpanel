@@ -97,6 +97,8 @@ func RegisterServerRoutes(e *gin.RouterGroup) {
 		l.POST("/:serverId/archive/*filename", middleware.ResolveServerNode, archive)
 		l.POST("/:serverId/extract/*filename", middleware.ResolveServerNode, extract)
 
+		l.POST("/:serverId/backup/create", middleware.ResolveServerNode, createBackup)
+
 		l.HEAD("/:serverId/query", middleware.ResolveServerNode, canQueryServer)
 		l.GET("/:serverId/query", middleware.ResolveServerNode, queryServer)
 
@@ -812,6 +814,23 @@ func extract(c *gin.Context) {
 	if response.HandleError(c, err, http.StatusInternalServerError) {
 	} else {
 		c.Status(http.StatusNoContent)
+	}
+}
+
+// @Summary Create backup
+// @Description Creates a full backup of the server
+// @Success 204 {object} nil
+// @Param id path string true "Server ID"
+// @Param name body string true "name of the backup"
+// @Router /api/servers/{id}/backup/create [post]
+// @Security OAuth2Application[server.backup.create]
+func createBackup(c *gin.Context) {
+	server := getServerFromGin(c)
+
+	backupFileName, fileSize, err := server.CreateBackup()
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+	} else {
+		c.JSON(http.StatusOK, &pufferpanel.ServerBackupResponse{BackupFileName: backupFileName, FileSize: fileSize})
 	}
 }
 

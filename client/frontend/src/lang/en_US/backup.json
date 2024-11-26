@@ -1,0 +1,9 @@
+{
+    "Backup" : "Backup",
+    "Name" : "Name",
+    "Create": "Create Backup",
+    "BackupsHeader": "Available Backups",
+    "Restore": "Restore",
+    "Download": "Download",
+    "Delete": "Delete"
+}

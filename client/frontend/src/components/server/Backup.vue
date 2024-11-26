@@ -1,0 +1,111 @@
+<script setup>
+import { ref, inject, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+import Loader from '@/components/ui/Loader.vue'
+import Btn from '@/components/ui/Btn.vue'
+import Icon from '@/components/ui/Icon.vue'
+import TextField from '@/components/ui/TextField.vue'
+
+const { t, locale } = useI18n()
+const toast = inject('toast')
+
+const props = defineProps({
+  server: { type: Object, required: true }
+})
+
+const backups = ref(null)
+const backupName = ref("")
+const backupRunning = ref(false)
+
+onMounted(async () => {
+  backups.value = await props.server.getBackups()
+})
+
+function canBackup() {
+  return backupRunning.value
+}
+
+async function save() {
+  try {
+    backupRunning.value = true
+    await props.server.createBackup(backupName.value)
+    toast.success(t('servers.SettingsSaved'))
+    backups.value = await props.server.getBackups()
+  }
+  finally {
+    backupRunning.value = false
+  }
+}
+
+const numFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 })
+function formatFileSize(size) {
+  if (!size) return '0 B'
+  if (size < Math.pow(2, 10)) return numFormat.format(size) + ' B'
+  if (size < Math.pow(2, 20)) return numFormat.format(size / Math.pow(2, 10)) + ' KiB'
+  if (size < Math.pow(2, 30)) return numFormat.format(size / Math.pow(2, 20)) + ' MiB'
+  if (size < Math.pow(2, 40)) return numFormat.format(size / Math.pow(2, 30)) + ' GiB'
+  return numFormat.format(size / Math.pow(2, 40)) + ' TiB'
+}
+
+function restore(file) {
+  console.log("restore", file);
+
+}
+
+function deleteRestore(file) {
+  console.log("delete", file)
+}
+console.log(locale.value.replace('_', '-'))
+// date-fns localization approach takes importing an object per locale
+// which is both a lot of data and annoying to have to handle as that
+// means manually dealing with fallbacks, dynamic imports, etc
+// so instead we just force the adapter to use the browsers built in
+// date localization tooling and just let date-fns do the logic parts
+const intl = new Intl.DateTimeFormat(
+  [locale.value.replace('_', '-'), 'en'],
+  { day: '2-digit', month: '2-digit', year: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' }
+)
+
+</script>
+
+<template>
+  <div class="backup-manager">
+    <h2 v-text="t('backup.Backup')" />
+    <div v-if="server.hasScope('server.backup.create')">
+      <text-field v-model="backupName" :label="t('backup.Name')" />
+      <btn color="primary" :disabled="canBackup()" @click="save()">
+        <icon v-if="!canBackup()" name="plus" /> <icon v-else name="loading" spin /> {{ t('backup.Create') }}
+      </btn>
+    </div>
+
+    <div class="group-header">
+      <div class="title">
+        <h3 v-text="t('backup.BackupsHeader')" />
+      </div>
+    </div>
+    <div class="backup-list">
+      <loader v-if="!Array.isArray(backups)" />
+      <!-- eslint-disable-next-line vue/no-template-shadow -->
+      <div v-for="backup in backups" v-else :key="backup.id" tabindex="0" class="backup">
+        <icon class="file-icon" name="file" />
+        <div class="details">
+          <div class="name">{{ backup.name }} ({{ intl.format(new Date(backup.createdAt)) }})</div>
+          <div class="size">{{ formatFileSize(backup.fileSize) }}</div>
+        </div>
+        <btn v-if="server.hasScope('server.backup.restore')" tabindex="-1" variant="icon" :tooltip="t('backup.Restore')"
+          @click.stop="restore(backup)">
+          <icon name="restore" />
+        </btn>
+        <a tabindex="-1" class="dl-link" target="_blank" rel="noopener">
+          <btn tabindex="-1" variant="icon" :tooltip="t('backup.Download')" @click.stop="">
+            <icon name="download" />
+          </btn>
+        </a>
+        <btn v-if="server.hasScope('server.backup.delete')" tabindex="-1" variant="icon" :tooltip="t('backup.Delete')"
+          @click.stop="deleteRestore(backup)">
+          <icon name="remove" />
+        </btn>
+      </div>
+    </div>
+  </div>
+</template>

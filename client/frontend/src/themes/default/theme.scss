@@ -1478,3 +1478,51 @@ html[dir="rtl"] #users .user h3::after {
     margin-right: 0.5rem;
   }
 }
+
+.backup-manager {
+  .header {
+    display: flex;
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+    h3 {
+      color: var(--text-disabled);
+      font-size: 0.9em;
+      margin-left: 0.5rem;
+      margin-right: 0.5rem;
+    }
+    .spacer {
+      flex-grow: 1;
+    }
+    .icon {
+      font-size: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  .backup-list {
+    .backup {
+      padding: 0.5em;
+      display: flex;
+      .details {
+        flex-grow: 1;
+        padding-left: 1rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        .size {
+          color: var(--text-disabled);
+          font-size: 0.9em;
+        }
+      }
+      .icon, .button {
+        font-size: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+  }
+
+}

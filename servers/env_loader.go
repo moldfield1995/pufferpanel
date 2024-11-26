@@ -10,7 +10,7 @@ import (
 
 var envMapping = make(map[string]pufferpanel.EnvironmentFactory)
 
-func CreateEnvironment(environmentType, folder string, server pufferpanel.Server) (pufferpanel.Environment, error) {
+func CreateEnvironment(environmentType, folder string, backupFolder string, server pufferpanel.Server) (pufferpanel.Environment, error) {
 	factory := envMapping[environmentType]
 
 	if factory == nil {
@@ -33,12 +33,15 @@ func CreateEnvironment(environmentType, folder string, server pufferpanel.Server
 	}
 
 	serverRoot := filepath.Join(folder, server.Identifier)
+	backupDirectory := filepath.Join(backupFolder, server.Identifier)
 	envCache := pufferpanel.CreateCache()
 
 	e := item.GetBase()
 	if e.RootDirectory == "" {
 		e.RootDirectory = serverRoot
 	}
+	e.BackupDirectory = backupDirectory
+
 	e.ConsoleTracker = pufferpanel.CreateTracker()
 	e.StatusTracker = pufferpanel.CreateTracker()
 	e.StatsTracker = pufferpanel.CreateTracker()

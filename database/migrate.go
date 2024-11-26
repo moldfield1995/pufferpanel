@@ -22,6 +22,7 @@ func Migrate(dbConn *gorm.DB) error {
 		&models.UserSetting{},
 		&models.Session{},
 		&models.TemplateRepo{},
+		&models.Backup{},
 	}
 
 	session := dbConn.Session(&gorm.Session{})

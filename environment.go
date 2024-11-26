@@ -46,6 +46,8 @@ type Environment interface {
 
 	GetRootDirectory() string
 
+	GetBackupDirectory() string
+
 	GetConsole() (console []byte, epoch int64)
 
 	GetConsoleFrom(time int64) (console []byte, epoch int64)
@@ -81,6 +83,7 @@ type BaseEnvironment struct {
 	Environment
 	Type              string               `json:"type"`
 	RootDirectory     string               `json:"root,omitempty"`
+	BackupDirectory   string               `json:"-"`
 	ConsoleBuffer     *MemoryCache         `json:"-"`
 	Wait              *sync.WaitGroup      `json:"-"`
 	ExecutionFunction ExecutionFunction    `json:"-"`
@@ -160,6 +163,10 @@ func (e *BaseEnvironment) CreateConsoleStdinProxy(config StdinConsoleConfigurati
 
 func (e *BaseEnvironment) GetRootDirectory() string {
 	return e.RootDirectory
+}
+
+func (e *BaseEnvironment) GetBackupDirectory() string {
+	return e.BackupDirectory
 }
 
 func (e *BaseEnvironment) GetConsole() (console []byte, epoch int64) {
