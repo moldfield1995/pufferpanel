@@ -542,10 +542,12 @@ func (p *Server) afterExit(exitCode int) {
 func (p *Server) GetItem(name string) (*FileData, error) {
 	info, err := p.GetFileServer().Stat(name)
 	if err != nil {
+		logging.Error.Printf("failed to find file %s, %s", name, err)
 		return nil, err
 	}
 
 	if info.IsDir() {
+		logging.Info.Printf("Is dir %s", name)
 		files, _ := p.GetFileServer().ReadDir(name)
 		var fileNames []pufferpanel.FileDesc
 		offset := 0
@@ -583,6 +585,7 @@ func (p *Server) GetItem(name string) (*FileData, error) {
 
 		return &FileData{FileList: fileNames}, nil
 	} else {
+		logging.Info.Printf("Is not dir %s", name)
 		file, err := p.GetFileServer().Open(name)
 		if err != nil {
 			return nil, err
@@ -653,6 +656,37 @@ func (p *Server) DeleteBackup(fileName string) error {
 	}
 
 	return nil
+}
+
+func (p *Server) RestoreBackup(fileName string) error {
+	backupDirectory := p.RunningEnvironment.GetBackupDirectory()
+	if backupDirectory == "" {
+		return pufferpanel.ErrSettingNotConfigured("backupDirectory")
+	}
+
+	backupfile := path.Join(backupDirectory, fileName)
+
+	_, err := os.Stat(backupfile)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+
+	serverfolder := p.GetFileServer().Prefix()
+
+	files, err := p.GetFileServer().Glob("*")
+	if err != nil {
+		return err
+	}
+	logging.Info.Printf("files found %d", len(files))
+	if len(files) > 0 { // Allways false?
+		err = p.GetFileServer().RemoveAll("./")
+		if err != nil {
+			logging.Info.Printf("failed to delted %s", err)
+			return err
+		}
+	}
+
+	return pufferpanel.Extract(nil, backupfile, serverfolder, "*", true, nil)
 }
 
 func (p *Server) valid() bool {

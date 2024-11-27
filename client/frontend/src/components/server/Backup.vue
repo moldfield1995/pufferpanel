@@ -57,10 +57,30 @@ function formatFileSize(size) {
   return numFormat.format(size / Math.pow(2, 40)) + ' TiB'
 }
 
+function promptRestore(file){
+  events.emit(
+      'confirm',
+      {
+        title: t('backup.RestorePrompt'),
+        body: t('backup.RestorePromptBody'),
+      },
+      {
+        text: t('backup.Restore'),
+        icon: 'remove',
+        action: () => {
+          restore(file)
+        }
+      },
+      {
+        color: 'neutral'
+      }
+    )
+}
+
 async function restore(file) {
   try {
     loading.value = true
-    console.log("restore", file);
+    await props.server.restoreBackup(file.id);
     toast.success(t('backup.Restored'))
     await loadBackups()
   }
@@ -78,7 +98,7 @@ function promptDelete(file){
       },
       {
         text: t('backup.Delete'),
-        icon: 'remove',
+        icon: 'restore',
         color: 'error',
         action: () => {
           deleteRestore(file)
@@ -140,7 +160,7 @@ const intl = new Intl.DateTimeFormat(
           <div class="size">{{ formatFileSize(backup.fileSize) }}</div>
         </div>
         <btn v-if="server.hasScope('server.backup.restore')" tabindex="-1" variant="icon" :tooltip="t('backup.Restore')"
-          @click.stop="restore(backup)">
+          @click.stop="promptRestore(backup)">
           <icon name="restore" />
         </btn>
         <a tabindex="-1" class="dl-link" target="_blank" rel="noopener">

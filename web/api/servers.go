@@ -116,6 +116,8 @@ func registerServers(g *gin.RouterGroup) {
 	g.OPTIONS("/:serverId/backup/create", response.CreateOptions("POST"))
 	g.DELETE("/:serverId/backup/:backupId", middleware.RequiresPermission(pufferpanel.ScopeServerBackupDelete), middleware.ResolveServerPanel, deleteBackup)
 	g.OPTIONS("/:serverId/backup/:backupId", response.CreateOptions("DELETE"))
+	g.POST("/:serverId/backup/restore/:backupId", middleware.RequiresPermission(pufferpanel.ScopeServerBackupCreate), middleware.ResolveServerPanel, restoreBackup)
+	g.OPTIONS("/:serverId/backup/restore/:backupId", response.CreateOptions("POST"))
 
 	p := g.Group("/:serverId/socket")
 	{
@@ -1008,7 +1010,7 @@ func getBackups(c *gin.Context) {
 // @Description Creates a full backup of the server
 // @Success 204 {object} nil
 // @Param id path string true "Server ID"
-// @Query name body string true "name of the backup"
+// @Query name query string true "name of the backup"
 // @Router /api/servers/{id}/backup/create [post]
 // @Security OAuth2Application[server.backup.create]
 func createBackup(c *gin.Context) {
@@ -1048,7 +1050,7 @@ func createBackup(c *gin.Context) {
 // @Description Removes the backup and its assosicated file
 // @Success 204 {object} nil
 // @Param id path string true "Server ID"
-// @Param backupId body string true "Backup ID"
+// @Param backupId path string true "Backup ID"
 // @Router /api/servers/{id}/backup/Delete/{backupId} [delete]
 // @Security OAuth2Application[server.backup.delete]
 func deleteBackup(c *gin.Context) {
@@ -1083,6 +1085,46 @@ func deleteBackup(c *gin.Context) {
 
 	err = bs.Delete(backupId)
 	if response.HandleError(c, err, http.StatusBadRequest) {
+		return
+	}
+
+	c.Status(http.StatusOK)
+}
+
+// @Summary Restore backup
+// @Description Removes all exisiting files and restores the server to the state of the backup
+// @Success 204 {object} nil
+// @Param id path string true "Server ID"
+// @Param backupId path string true "Backup ID"
+// @Router /api/servers/{id}/backup/Delete/{backupId} [delete]
+// @Security OAuth2Application[server.backup.restore]
+func restoreBackup(c *gin.Context) {
+	server := getServerFromGin(c)
+	db := middleware.GetDatabase(c)
+	ns := &services.Node{DB: db}
+	bs := &services.Backup{DB: db}
+	node := &server.Node
+
+	var err error
+	var backupId uint
+	if backupId, err = cast.ToUintE(c.Param("backupId")); err != nil {
+		response.HandleError(c, err, http.StatusBadRequest)
+		return
+	}
+
+	backup, err := bs.GetById(backupId)
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+		return
+	}
+	if backup == nil {
+		c.Status(http.StatusNotFound)
+		return
+	}
+
+	resolvedPath := "/daemon/server/" + server.Identifier + "/backup/restore" + "?fileName=" + backup.FileName
+
+	_, err = ns.CallNode(node, "POST", resolvedPath, nil, nil)
+	if response.HandleError(c, err, http.StatusInternalServerError) {
 		return
 	}
 

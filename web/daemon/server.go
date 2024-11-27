@@ -99,6 +99,7 @@ func RegisterServerRoutes(e *gin.RouterGroup) {
 
 		l.POST("/:serverId/backup/create", middleware.ResolveServerNode, createBackup)
 		l.DELETE("/:serverId/backup", middleware.ResolveServerNode, deleteBackup)
+		l.POST("/:serverId/backup/restore", middleware.ResolveServerNode, restoreBackup)
 
 		l.HEAD("/:serverId/query", middleware.ResolveServerNode, canQueryServer)
 		l.GET("/:serverId/query", middleware.ResolveServerNode, queryServer)
@@ -826,6 +827,7 @@ func extract(c *gin.Context) {
 // @Security OAuth2Application[server.backup.create]
 func createBackup(c *gin.Context) {
 	server := getServerFromGin(c)
+	//TODO: check if backing up or installing
 
 	backupFileName, fileSize, err := server.CreateBackup()
 	if response.HandleError(c, err, http.StatusInternalServerError) {
@@ -834,18 +836,39 @@ func createBackup(c *gin.Context) {
 	}
 }
 
-// @Summary Create backup
-// @Description Creates a full backup of the server
+// @Summary Delete backup
+// @Description Delete a backup of the server
 // @Success 204 {object} nil
 // @Param id path string true "Server ID"
-// @Param fileName path string true "Server ID"
-// @Router /api/servers/{id}/backup/create [post]
-// @Security OAuth2Application[server.backup.create]
+// @Param fileName path string true "File Name"
+// @Router /api/servers/{id}/backup/delete [post]
+// @Security OAuth2Application[server.backup.delete]
 func deleteBackup(c *gin.Context) {
 	server := getServerFromGin(c)
 	fileName := c.Query("fileName")
-	logging.Info.Print("Request to Server to delete file")
+	//TODO: check if backing up or installing
+
 	err := server.DeleteBackup(fileName)
+
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+	} else {
+		c.Status(http.StatusOK)
+	}
+}
+
+// @Summary Restore backup
+// @Description Restore a full backup of the server
+// @Success 204 {object} nil
+// @Param id path string true "Server ID"
+// @Param fileName path string true "File Name"
+// @Router /api/servers/{id}/backup/restore [post]
+// @Security OAuth2Application[server.backup.restore]
+func restoreBackup(c *gin.Context) {
+	server := getServerFromGin(c)
+	fileName := c.Query("fileName")
+	//TODO: check if backing up or installing
+
+	err := server.RestoreBackup(fileName)
 
 	if response.HandleError(c, err, http.StatusInternalServerError) {
 	} else {

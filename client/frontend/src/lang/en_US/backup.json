@@ -6,6 +6,8 @@
     "BackupsHeader": "Available backups",
     "Restore": "Restore",
     "Restored":"Backup restored successfully",
+    "RestorePrompt":"Restore from backup",
+    "RestorePromptBody":"Do you really want to restore from this backup? \r\n This will delete any existing data so it is highly recommended to create a backup first.",
     "Download": "Download",
     "Delete": "Delete",
     "Deleted":"Backup deleted successfully",
