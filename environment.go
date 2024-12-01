@@ -40,6 +40,10 @@ type Environment interface {
 
 	SetInstalling(bool)
 
+	IsBackingUp() bool
+
+	SetBackingUp(bool)
+
 	WaitForMainProcess() error
 
 	WaitForMainProcessFor(timeout time.Duration) error
@@ -94,6 +98,7 @@ type BaseEnvironment struct {
 	StatusTracker     *Tracker             `json:"-"`
 	StatsTracker      *Tracker             `json:"-"`
 	Installing        bool                 `json:"-"`
+	BackingUp         bool                 `json:"-"`
 	IsRunningFunc     func() (bool, error) `json:"-"`
 	KillFunc          func() error         `json:"-"`
 	Console           Console              `json:"-"`
@@ -289,6 +294,14 @@ func (e *BaseEnvironment) SetInstalling(flag bool) {
 		},
 		Type: MessageTypeStatus,
 	})
+}
+
+func (e *BaseEnvironment) IsBackingUp() bool {
+	return e.BackingUp
+}
+
+func (e *BaseEnvironment) SetBackingUp(flag bool) {
+	e.BackingUp = flag
 }
 
 func (e *BaseEnvironment) ExecuteInMainProcess(cmd string) (err error) {

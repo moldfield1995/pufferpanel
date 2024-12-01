@@ -27,7 +27,7 @@ async function loadBackups() {
   backups.value = await props.server.getBackups()
 }
 
-function canBackup() {
+function isBackingUp() {
   return backupRunning.value
 }
 
@@ -139,8 +139,8 @@ const intl = new Intl.DateTimeFormat(
     <h2 v-text="t('backup.Backup')" />
     <div v-if="server.hasScope('server.backup.create')">
       <text-field v-model="backupName" :label="t('backup.Name')" />
-      <btn color="primary" :disabled="canBackup()" @click="save()">
-        <icon v-if="!canBackup()" name="plus" />
+      <btn color="primary" :disabled="isBackingUp() || isLoading()" @click="save()">
+        <icon v-if="!isBackingUp()" name="plus" />
         <icon v-else name="loading" spin /> {{ t('backup.Create') }}
       </btn>
     </div>
@@ -159,7 +159,7 @@ const intl = new Intl.DateTimeFormat(
           <div class="name">{{ backup.name }} ({{ intl.format(new Date(backup.createdAt)) }})</div>
           <div class="size">{{ formatFileSize(backup.fileSize) }}</div>
         </div>
-        <btn v-if="server.hasScope('server.backup.restore')" tabindex="-1" variant="icon" :tooltip="t('backup.Restore')"
+        <btn v-if="server.hasScope('server.backup.restore')" tabindex="-1" variant="icon" :tooltip="t('backup.Restore')" :disabled="isBackingUp()"
           @click.stop="promptRestore(backup)">
           <icon name="restore" />
         </btn>
@@ -168,7 +168,7 @@ const intl = new Intl.DateTimeFormat(
             <icon name="download" />
           </btn>
         </a>
-        <btn v-if="server.hasScope('server.backup.delete')" tabindex="-1" variant="icon" :tooltip="t('backup.Delete')"
+        <btn v-if="server.hasScope('server.backup.delete')" tabindex="-1" variant="icon" :tooltip="t('backup.Delete')" :disabled="isBackingUp()"
           @click.stop="promptDelete(backup)">
           <icon name="remove" />
         </btn>

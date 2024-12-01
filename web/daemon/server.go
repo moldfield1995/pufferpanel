@@ -828,10 +828,13 @@ func extract(c *gin.Context) {
 // @Security OAuth2Application[server.backup.create]
 func createBackup(c *gin.Context) {
 	server := getServerFromGin(c)
-	//TODO: check if backing up or installing
 
 	backupFileName, fileSize, err := server.CreateBackup()
-	if response.HandleError(c, err, http.StatusInternalServerError) {
+
+	pufferError, ispufferError := err.(*pufferpanel.Error)
+	if ispufferError && pufferpanel.ErrBackupInProgress.Is(pufferError) {
+		response.HandleError(c, err, http.StatusBadRequest)
+	} else if response.HandleError(c, err, http.StatusInternalServerError) {
 	} else {
 		c.JSON(http.StatusOK, &pufferpanel.ServerBackupResponse{BackupFileName: backupFileName, FileSize: fileSize})
 	}
@@ -847,11 +850,13 @@ func createBackup(c *gin.Context) {
 func deleteBackup(c *gin.Context) {
 	server := getServerFromGin(c)
 	fileName := c.Query("fileName")
-	//TODO: check if backing up or installing
 
 	err := server.DeleteBackup(fileName)
 
-	if response.HandleError(c, err, http.StatusInternalServerError) {
+	pufferError, ispufferError := err.(*pufferpanel.Error)
+	if ispufferError && pufferpanel.ErrBackupInProgress.Is(pufferError) {
+		response.HandleError(c, err, http.StatusBadRequest)
+	} else if response.HandleError(c, err, http.StatusInternalServerError) {
 	} else {
 		c.Status(http.StatusOK)
 	}
@@ -867,11 +872,13 @@ func deleteBackup(c *gin.Context) {
 func restoreBackup(c *gin.Context) {
 	server := getServerFromGin(c)
 	fileName := c.Query("fileName")
-	//TODO: check if backing up or installing
 
 	err := server.RestoreBackup(fileName)
 
-	if response.HandleError(c, err, http.StatusInternalServerError) {
+	pufferError, ispufferError := err.(*pufferpanel.Error)
+	if ispufferError && pufferpanel.ErrBackupInProgress.Is(pufferError) {
+		response.HandleError(c, err, http.StatusBadRequest)
+	} else if response.HandleError(c, err, http.StatusInternalServerError) {
 	} else {
 		c.Status(http.StatusOK)
 	}

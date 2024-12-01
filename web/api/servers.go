@@ -1029,6 +1029,13 @@ func createBackup(c *gin.Context) {
 	}
 
 	callResponse, err := ns.CallNode(node, c.Request.Method, resolvedPath, c.Request.Body, c.Request.Header)
+	if callResponse.StatusCode == http.StatusBadRequest { //If its a local node, the err will not be set, have to check the status code
+		newHeaders := cleanHttpReturnErrors(callResponse.Header)
+
+		c.DataFromReader(callResponse.StatusCode, callResponse.ContentLength, callResponse.Header.Get("Content-Type"), callResponse.Body, newHeaders)
+		c.Abort()
+		return
+	}
 	if response.HandleError(c, err, http.StatusInternalServerError) {
 		return
 	}
@@ -1080,7 +1087,14 @@ func deleteBackup(c *gin.Context) {
 
 	resolvedPath := "/daemon/server/" + server.Identifier + "/backup" + "?fileName=" + backup.FileName
 
-	_, err = ns.CallNode(node, "DELETE", resolvedPath, nil, nil)
+	callResponse, err := ns.CallNode(node, "DELETE", resolvedPath, nil, nil)
+	if callResponse.StatusCode == http.StatusBadRequest { //If its a local node, the err will not be set, have to check the status code
+		newHeaders := cleanHttpReturnErrors(callResponse.Header)
+
+		c.DataFromReader(callResponse.StatusCode, callResponse.ContentLength, callResponse.Header.Get("Content-Type"), callResponse.Body, newHeaders)
+		c.Abort()
+		return
+	}
 	if response.HandleError(c, err, http.StatusInternalServerError) {
 		return
 	}
@@ -1125,7 +1139,14 @@ func restoreBackup(c *gin.Context) {
 
 	resolvedPath := "/daemon/server/" + server.Identifier + "/backup/restore" + "?fileName=" + backup.FileName
 
-	_, err = ns.CallNode(node, "POST", resolvedPath, nil, nil)
+	callResponse, err := ns.CallNode(node, "POST", resolvedPath, nil, nil)
+	if callResponse.StatusCode == http.StatusBadRequest { //If its a local node, the err will not be set, have to check the status code
+		newHeaders := cleanHttpReturnErrors(callResponse.Header)
+
+		c.DataFromReader(callResponse.StatusCode, callResponse.ContentLength, callResponse.Header.Get("Content-Type"), callResponse.Body, newHeaders)
+		c.Abort()
+		return
+	}
 	if response.HandleError(c, err, http.StatusInternalServerError) {
 		return
 	}

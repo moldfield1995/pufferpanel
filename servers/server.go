@@ -613,6 +613,14 @@ func (p *Server) CreateBackup() (string, int64, error) {
 	if backupDirectory == "" {
 		return "", 0, pufferpanel.ErrSettingNotConfigured("backupDirectory")
 	}
+
+	if p.GetEnvironment().IsBackingUp() {
+		return "", 0, pufferpanel.ErrBackupInProgress
+	}
+
+	p.GetEnvironment().SetBackingUp(true)
+	defer p.GetEnvironment().SetBackingUp(false)
+
 	_, err := os.Stat(backupDirectory)
 	if err != nil && os.IsNotExist(err) {
 		err = os.Mkdir(backupDirectory, 0755)
@@ -648,6 +656,13 @@ func (p *Server) DeleteBackup(fileName string) error {
 		return pufferpanel.ErrSettingNotConfigured("backupDirectory")
 	}
 
+	if p.GetEnvironment().IsBackingUp() {
+		return pufferpanel.ErrBackupInProgress
+	}
+
+	p.GetEnvironment().SetBackingUp(true)
+	defer p.GetEnvironment().SetBackingUp(false)
+
 	backupfile := path.Join(backupDirectory, fileName)
 
 	err := os.Remove(backupfile)
@@ -664,6 +679,13 @@ func (p *Server) RestoreBackup(fileName string) error {
 		return pufferpanel.ErrSettingNotConfigured("backupDirectory")
 	}
 
+	if p.GetEnvironment().IsBackingUp() {
+		return pufferpanel.ErrBackupInProgress
+	}
+
+	p.GetEnvironment().SetBackingUp(true)
+	defer p.GetEnvironment().SetBackingUp(false)
+
 	backupfile := path.Join(backupDirectory, fileName)
 
 	_, err := os.Stat(backupfile)
@@ -679,7 +701,7 @@ func (p *Server) RestoreBackup(fileName string) error {
 		return err
 	}
 
-	if len(files) > 0 { // Allways false?
+	if len(files) > 0 {
 		err = p.GetFileServer().RemoveAll("./")
 		if err != nil {
 			logging.Info.Printf("failed to delted %s", err)
