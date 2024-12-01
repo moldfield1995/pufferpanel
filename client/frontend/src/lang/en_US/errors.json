@@ -46,5 +46,6 @@
   "ErrUnsupportedOS": "OS (${actual}) not supported. Supported OS: ${expected}",
   "ErrUnsupportedArch": "Architecture ${actual} not supported. Supported Architectures: ${expected}",
   "ErrNoCommand": "No command could be determined to be used for this server",
-  "ErrBackupInProgress": "The server is currently perfoming a backup or restore. please wait for this process to be complete"
+  "ErrBackupInProgress": "The server is currently performing a backup or restore. Please wait for this process to be complete",
+  "ErrBackupServerRunning": "The server is currently running. Please stop the server before doing backups or restores"
 }

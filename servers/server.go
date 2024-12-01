@@ -177,6 +177,10 @@ func (p *Server) Start() error {
 		return err
 	}
 
+	if p.GetEnvironment().IsBackingUp() {
+		return pufferpanel.ErrBackupInProgress
+	}
+
 	p.Log(logging.Info, "Starting server %s", p.Id())
 	p.RunningEnvironment.DisplayToConsole(true, "Starting server\n")
 
@@ -355,6 +359,10 @@ func (p *Server) Destroy() (err error) {
 }
 
 func (p *Server) Install() error {
+	if p.GetEnvironment().IsBackingUp() {
+		return pufferpanel.ErrBackupInProgress
+	}
+
 	if p.GetEnvironment().IsInstalling() {
 		return nil
 	}
