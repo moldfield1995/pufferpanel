@@ -673,11 +673,12 @@ func (p *Server) RestoreBackup(fileName string) error {
 
 	serverfolder := p.GetFileServer().Prefix()
 
+	//Check if any files exist, as remove all errors if its empty
 	files, err := p.GetFileServer().Glob("*")
 	if err != nil {
 		return err
 	}
-	logging.Info.Printf("files found %d", len(files))
+
 	if len(files) > 0 { // Allways false?
 		err = p.GetFileServer().RemoveAll("./")
 		if err != nil {
@@ -687,6 +688,27 @@ func (p *Server) RestoreBackup(fileName string) error {
 	}
 
 	return pufferpanel.Extract(nil, backupfile, serverfolder, "*", true, nil)
+}
+
+func (p *Server) GetBackupFile(fileName string) (*FileData, error) {
+	backupDirectory := p.RunningEnvironment.GetBackupDirectory()
+	if backupDirectory == "" {
+		return nil, pufferpanel.ErrSettingNotConfigured("backupDirectory")
+	}
+
+	backupfile := path.Join(backupDirectory, fileName)
+
+	info, err := os.Stat(backupfile)
+	if err != nil && !os.IsNotExist(err) {
+		return nil, err
+	}
+
+	file, err := os.Open(backupfile)
+
+	if err != nil {
+		return nil, err
+	}
+	return &FileData{Contents: file, ContentLength: info.Size(), Name: info.Name()}, nil
 }
 
 func (p *Server) valid() bool {

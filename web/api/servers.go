@@ -118,6 +118,8 @@ func registerServers(g *gin.RouterGroup) {
 	g.OPTIONS("/:serverId/backup/:backupId", response.CreateOptions("DELETE"))
 	g.POST("/:serverId/backup/restore/:backupId", middleware.RequiresPermission(pufferpanel.ScopeServerBackupCreate), middleware.ResolveServerPanel, restoreBackup)
 	g.OPTIONS("/:serverId/backup/restore/:backupId", response.CreateOptions("POST"))
+	g.GET("/:serverId/backup/download/:backupId", middleware.RequiresPermission(pufferpanel.ScopeServerBackupView), middleware.ResolveServerPanel, downloadBackup)
+	g.OPTIONS("/:serverId/backup/download/:backupId", response.CreateOptions("GET"))
 
 	p := g.Group("/:serverId/socket")
 	{
@@ -1131,6 +1133,50 @@ func restoreBackup(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
+// @Summary Download backup
+// @Description Download a server backup
+// @Success 204 {object} nil
+// @Param id path string true "Server ID"
+// @Param backupId path string true "Backup ID"
+// @Router /api/servers/{id}/backup/Delete/{backupId} [delete]
+// @Security OAuth2Application[server.backup.restore]
+func downloadBackup(c *gin.Context) {
+	server := getServerFromGin(c)
+	db := middleware.GetDatabase(c)
+	ns := &services.Node{DB: db}
+	bs := &services.Backup{DB: db}
+	node := &server.Node
+
+	var err error
+	var backupId uint
+	if backupId, err = cast.ToUintE(c.Param("backupId")); err != nil {
+		response.HandleError(c, err, http.StatusBadRequest)
+		return
+	}
+
+	backup, err := bs.GetById(backupId)
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+		return
+	}
+	if backup == nil {
+		c.Status(http.StatusNotFound)
+		return
+	}
+
+	resolvedPath := "/daemon/server/" + server.Identifier + "/backup/download" + "?fileName=" + backup.FileName
+
+	callResponse, err := ns.CallNode(node, "GET", resolvedPath, nil, nil)
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+		return
+	}
+
+	newHeaders := cleanHttpReturnErrors(callResponse.Header)
+
+	c.DataFromReader(callResponse.StatusCode, callResponse.ContentLength, callResponse.Header.Get("Content-Type"), callResponse.Body, newHeaders)
+	c.Abort()
+
+}
+
 func getFromData(variables map[string]pufferpanel.Variable, key string) (result interface{}, exists bool) {
 	for k, v := range variables {
 		if k == key {
@@ -1228,9 +1274,16 @@ func proxyHttpRequest(c *gin.Context, path string, ns *services.Node, node *mode
 
 	defer utils.CloseResponse(callResponse)
 
+	newHeaders := cleanHttpReturnErrors(callResponse.Header)
+
+	c.DataFromReader(callResponse.StatusCode, callResponse.ContentLength, callResponse.Header.Get("Content-Type"), callResponse.Body, newHeaders)
+	c.Abort()
+}
+
+func cleanHttpReturnErrors(currentHeaders http.Header) map[string]string {
 	//Even though apache isn't going to be in place, we can't set certain headers
 	newHeaders := make(map[string]string)
-	for k, v := range callResponse.Header {
+	for k, v := range currentHeaders {
 		switch k {
 		case "Transfer-Encoding":
 		case "Content-Type":
@@ -1240,9 +1293,7 @@ func proxyHttpRequest(c *gin.Context, path string, ns *services.Node, node *mode
 			newHeaders[k] = strings.Join(v, ", ")
 		}
 	}
-
-	c.DataFromReader(callResponse.StatusCode, callResponse.ContentLength, callResponse.Header.Get("Content-Type"), callResponse.Body, newHeaders)
-	c.Abort()
+	return newHeaders
 }
 
 func proxySocketRequest(c *gin.Context, path string, ns *services.Node, node *models.Node) {

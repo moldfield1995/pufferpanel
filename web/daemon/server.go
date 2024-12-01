@@ -100,6 +100,7 @@ func RegisterServerRoutes(e *gin.RouterGroup) {
 		l.POST("/:serverId/backup/create", middleware.ResolveServerNode, createBackup)
 		l.DELETE("/:serverId/backup", middleware.ResolveServerNode, deleteBackup)
 		l.POST("/:serverId/backup/restore", middleware.ResolveServerNode, restoreBackup)
+		l.GET("/:serverId/backup/download", middleware.ResolveServerNode, downloadBackup)
 
 		l.HEAD("/:serverId/query", middleware.ResolveServerNode, canQueryServer)
 		l.GET("/:serverId/query", middleware.ResolveServerNode, queryServer)
@@ -840,7 +841,7 @@ func createBackup(c *gin.Context) {
 // @Description Delete a backup of the server
 // @Success 204 {object} nil
 // @Param id path string true "Server ID"
-// @Param fileName path string true "File Name"
+// @Param fileName query string true "File Name"
 // @Router /api/servers/{id}/backup/delete [post]
 // @Security OAuth2Application[server.backup.delete]
 func deleteBackup(c *gin.Context) {
@@ -860,7 +861,7 @@ func deleteBackup(c *gin.Context) {
 // @Description Restore a full backup of the server
 // @Success 204 {object} nil
 // @Param id path string true "Server ID"
-// @Param fileName path string true "File Name"
+// @Param fileName query string true "File Name"
 // @Router /api/servers/{id}/backup/restore [post]
 // @Security OAuth2Application[server.backup.restore]
 func restoreBackup(c *gin.Context) {
@@ -873,6 +874,36 @@ func restoreBackup(c *gin.Context) {
 	if response.HandleError(c, err, http.StatusInternalServerError) {
 	} else {
 		c.Status(http.StatusOK)
+	}
+}
+
+// @Summary Download backup
+// @Description Download a backup of the server
+// @Success 204 {object} nil
+// @Param id path string true "Server ID"
+// @Param fileName query string true "File Name"
+// @Router /api/servers/{id}/backup/restore [post]
+// @Security OAuth2Application[server.backup.restore]
+func downloadBackup(c *gin.Context) {
+	server := getServerFromGin(c)
+	fileName := c.Query("fileName")
+
+	data, err := server.GetBackupFile(fileName)
+	defer func() {
+		if data != nil {
+			pufferpanel.Close(data.Contents)
+		}
+	}()
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+	} else {
+		fileName := filepath.Base(data.Name)
+
+		extraHeaders := map[string]string{
+			"Content-Disposition": fmt.Sprintf(`attachment; filename="%s"`, fileName),
+		}
+
+		//discard the built-in response, we cannot use this one at all
+		c.DataFromReader(http.StatusOK, data.ContentLength, "application/octet-stream", data.Contents, extraHeaders)
 	}
 }
 

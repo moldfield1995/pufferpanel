@@ -255,6 +255,10 @@ export class ServerApi {
     return true
   }
 
+  getBackupUrl (id,backupId) {
+    return `/api/servers/${id}/backup/download/${backupId}`
+  }
+
   async deleteFile(id, path) {
     if (path.indexOf('/') === 0) path = path.substring(1)
     await this._api.delete(this.getFileUrl(id, path))
@@ -540,6 +544,10 @@ class Server {
 
   async restoreBackup(backupId){
     return await this._api.server.restoreBackup(this.id, backupId)
+  }
+
+   getBackupUrl(backupId){
+    return this._api.server.getBackupUrl(this.id, backupId)
   }
 
   async deleteFile(path) {
