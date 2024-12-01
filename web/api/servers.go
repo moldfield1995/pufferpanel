@@ -116,7 +116,7 @@ func registerServers(g *gin.RouterGroup) {
 	g.OPTIONS("/:serverId/backup/create", response.CreateOptions("POST"))
 	g.DELETE("/:serverId/backup/:backupId", middleware.RequiresPermission(pufferpanel.ScopeServerBackupDelete), middleware.ResolveServerPanel, deleteBackup)
 	g.OPTIONS("/:serverId/backup/:backupId", response.CreateOptions("DELETE"))
-	g.POST("/:serverId/backup/restore/:backupId", middleware.RequiresPermission(pufferpanel.ScopeServerBackupCreate), middleware.ResolveServerPanel, restoreBackup)
+	g.POST("/:serverId/backup/restore/:backupId", middleware.RequiresPermission(pufferpanel.ScopeServerBackupRestore), middleware.ResolveServerPanel, restoreBackup)
 	g.OPTIONS("/:serverId/backup/restore/:backupId", response.CreateOptions("POST"))
 	g.GET("/:serverId/backup/download/:backupId", middleware.RequiresPermission(pufferpanel.ScopeServerBackupView), middleware.ResolveServerPanel, downloadBackup)
 	g.OPTIONS("/:serverId/backup/download/:backupId", response.CreateOptions("GET"))
