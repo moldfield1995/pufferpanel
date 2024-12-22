@@ -44,10 +44,10 @@ const perms = [
 	'server.console.send',
 	'server.stats',
 	'server.status',
-  'server.backup.view',
-  'server.backup.create',
-  'server.backup.restore',
-  'server.backup.delete',
+	'server.backup.view',
+	'server.backup.create',
+	'server.backup.restore',
+	'server.backup.delete',
 ].map(scope => {
   const res = {
     label: t('scopes.name.' + scope.replace(/\./g, '-')),

@@ -164,7 +164,7 @@ const intl = new Intl.DateTimeFormat(
           <icon name="restore" />
         </btn>
         <a tabindex="-1" class="dl-link" :href="props.server.getBackupUrl(backup.id)" target="_blank" rel="noopener">
-          <btn tabindex="-1" variant="icon" :tooltip="t('backup.Download')" @click.stop="">
+          <btn tabindex="-1" variant="icon" :tooltip="t('backup.Download')">
             <icon name="download" />
           </btn>
         </a>

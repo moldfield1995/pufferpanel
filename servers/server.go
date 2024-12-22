@@ -550,12 +550,10 @@ func (p *Server) afterExit(exitCode int) {
 func (p *Server) GetItem(name string) (*FileData, error) {
 	info, err := p.GetFileServer().Stat(name)
 	if err != nil {
-		logging.Error.Printf("failed to find file %s, %s", name, err)
 		return nil, err
 	}
 
 	if info.IsDir() {
-		logging.Info.Printf("Is dir %s", name)
 		files, _ := p.GetFileServer().ReadDir(name)
 		var fileNames []pufferpanel.FileDesc
 		offset := 0
@@ -593,7 +591,6 @@ func (p *Server) GetItem(name string) (*FileData, error) {
 
 		return &FileData{FileList: fileNames}, nil
 	} else {
-		logging.Info.Printf("Is not dir %s", name)
 		file, err := p.GetFileServer().Open(name)
 		if err != nil {
 			return nil, err
@@ -709,18 +706,16 @@ func (p *Server) RestoreBackup(fileName string) error {
 		return err
 	}
 
-	if len(existingFiles) > 0 {
-		for _, existingFile := range existingFiles {
-			file, err := p.GetFileServer().Stat(existingFile)
-			if file.IsDir() {
-				err = p.GetFileServer().RemoveAll(existingFile)
-			} else {
-				p.GetFileServer().Remove(existingFile)
-			}
-			if err != nil {
-				logging.Info.Printf("failed to delted %s", err)
-				return err
-			}
+	for _, existingFile := range existingFiles {
+		file, err := p.GetFileServer().Stat(existingFile)
+		if file.IsDir() {
+			err = p.GetFileServer().RemoveAll(existingFile)
+		} else {
+			p.GetFileServer().Remove(existingFile)
+		}
+		if err != nil {
+			logging.Info.Printf("failed to delted %s", err)
+			return err
 		}
 	}
 
