@@ -914,7 +914,7 @@ func downloadBackup(c *gin.Context) {
 	data, err := server.GetBackupFile(fileName)
 	defer func() {
 		if data != nil {
-			pufferpanel.Close(data.Contents)
+			utils.Close(data.Contents)
 		}
 	}()
 	if response.HandleError(c, err, http.StatusInternalServerError) {

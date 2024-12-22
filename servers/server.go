@@ -615,7 +615,7 @@ func (p *Server) Extract(source, destination string) error {
 }
 
 func (p *Server) CreateBackup() (string, int64, error) {
-	files := []string{p.GetFileServer().Prefix()}
+	sourceFiles := []string{p.GetFileServer().Prefix()}
 
 	backupDirectory := p.RunningEnvironment.GetBackupDirectory()
 	if backupDirectory == "" {
@@ -641,10 +641,10 @@ func (p *Server) CreateBackup() (string, int64, error) {
 	if err != nil {
 		return "", 0, err
 	}
-	backupFileName := backupId.String() + ".tar.gz"
+	backupFileName := backupId.String() + ".tar.sz"
 	backupfile := path.Join(backupDirectory, backupFileName)
 
-	err = pufferpanel.Compress(nil, backupfile, files)
+	err = files.Compress(nil, backupfile, sourceFiles)
 	if err != nil {
 		return "", 0, err
 	}
@@ -704,20 +704,27 @@ func (p *Server) RestoreBackup(fileName string) error {
 	serverfolder := p.GetFileServer().Prefix()
 
 	//Check if any files exist, as remove all errors if its empty
-	files, err := p.GetFileServer().Glob("*")
+	existingFiles, err := p.GetFileServer().Glob("*")
 	if err != nil {
 		return err
 	}
 
-	if len(files) > 0 {
-		err = p.GetFileServer().RemoveAll("./")
-		if err != nil {
-			logging.Info.Printf("failed to delted %s", err)
-			return err
+	if len(existingFiles) > 0 {
+		for _, existingFile := range existingFiles {
+			file, err := p.GetFileServer().Stat(existingFile)
+			if file.IsDir() {
+				err = p.GetFileServer().RemoveAll(existingFile)
+			} else {
+				p.GetFileServer().Remove(existingFile)
+			}
+			if err != nil {
+				logging.Info.Printf("failed to delted %s", err)
+				return err
+			}
 		}
 	}
 
-	return pufferpanel.Extract(nil, backupfile, serverfolder, "*", true, nil)
+	return files.Extract(nil, backupfile, serverfolder, "*", true, nil)
 }
 
 func (p *Server) GetBackupFile(fileName string) (*FileData, error) {
