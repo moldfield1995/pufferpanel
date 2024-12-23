@@ -866,7 +866,7 @@ func deleteBackup(c *gin.Context) {
 		response.HandleError(c, err, http.StatusBadRequest)
 	} else if response.HandleError(c, err, http.StatusInternalServerError) {
 	} else {
-		c.Status(http.StatusOK)
+		c.Status(http.StatusNoContent)
 	}
 }
 
@@ -896,7 +896,7 @@ func restoreBackup(c *gin.Context) {
 		response.HandleError(c, err, http.StatusBadRequest)
 	} else if response.HandleError(c, err, http.StatusInternalServerError) {
 	} else {
-		c.Status(http.StatusOK)
+		c.Status(http.StatusNoContent)
 	}
 }
 

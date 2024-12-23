@@ -714,7 +714,7 @@ func (p *Server) RestoreBackup(fileName string) error {
 			p.GetFileServer().Remove(existingFile)
 		}
 		if err != nil {
-			logging.Info.Printf("failed to delted %s", err)
+			logging.Info.Printf("failed to delete %s", err)
 			return err
 		}
 	}

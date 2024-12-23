@@ -46,7 +46,7 @@ func (bs *Backup) Create(model *models.Backup) error {
 }
 
 func (bs *Backup) Update(model *models.Backup) error {
-	res := bs.DB.Omit(clause.Associations).Omit("id").Save(model)
+	res := bs.DB.Omit(clause.Associations).Save(model)
 	return res.Error
 }
 

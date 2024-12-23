@@ -1052,7 +1052,7 @@ func createBackup(c *gin.Context) {
 		return
 	}
 
-	c.Status(http.StatusOK)
+	c.Status(http.StatusNoContent)
 }
 
 // @Summary Delete backup
@@ -1104,7 +1104,7 @@ func deleteBackup(c *gin.Context) {
 		return
 	}
 
-	c.Status(http.StatusOK)
+	c.Status(http.StatusNoContent)
 }
 
 // @Summary Restore backup
@@ -1151,7 +1151,7 @@ func restoreBackup(c *gin.Context) {
 		return
 	}
 
-	c.Status(http.StatusOK)
+	c.Status(http.StatusNoContent)
 }
 
 // @Summary Download backup
@@ -1194,8 +1194,6 @@ func downloadBackup(c *gin.Context) {
 	newHeaders := cleanHttpReturnErrors(callResponse.Header)
 
 	c.DataFromReader(callResponse.StatusCode, callResponse.ContentLength, callResponse.Header.Get("Content-Type"), callResponse.Body, newHeaders)
-	c.Abort()
-
 }
 
 func getFromData(variables map[string]pufferpanel.Variable, key string) (result interface{}, exists bool) {
@@ -1298,7 +1296,6 @@ func proxyHttpRequest(c *gin.Context, path string, ns *services.Node, node *mode
 	newHeaders := cleanHttpReturnErrors(callResponse.Header)
 
 	c.DataFromReader(callResponse.StatusCode, callResponse.ContentLength, callResponse.Header.Get("Content-Type"), callResponse.Body, newHeaders)
-	c.Abort()
 }
 
 func cleanHttpReturnErrors(currentHeaders http.Header) map[string]string {
