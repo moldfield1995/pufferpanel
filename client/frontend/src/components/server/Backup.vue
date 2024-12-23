@@ -101,7 +101,7 @@ function promptDelete(file){
         icon: 'restore',
         color: 'error',
         action: () => {
-          deleteRestore(file)
+          deleteBackup(file)
         }
       },
       {
@@ -110,7 +110,7 @@ function promptDelete(file){
     )
 }
 
-async function deleteRestore(file) {
+async function deleteBackup(file) {
   try {
     loading.value = true
     await props.server.deleteBackup(file.id);
@@ -121,12 +121,7 @@ async function deleteRestore(file) {
     loading.value = false
   }
 }
-console.log(locale.value.replace('_', '-'))
-// date-fns localization approach takes importing an object per locale
-// which is both a lot of data and annoying to have to handle as that
-// means manually dealing with fallbacks, dynamic imports, etc
-// so instead we just force the adapter to use the browsers built in
-// date localization tooling and just let date-fns do the logic parts
+
 const intl = new Intl.DateTimeFormat(
   [locale.value.replace('_', '-'), 'en'],
   { day: '2-digit', month: '2-digit', year: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' }
