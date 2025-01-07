@@ -881,8 +881,7 @@ func restoreBackup(c *gin.Context) {
 	server := getServerFromGin(c)
 	fileName := c.Query("fileName")
 	isRunning, err := server.IsRunning()
-	if err != nil {
-		response.HandleError(c, err, http.StatusInternalServerError)
+	if response.HandleError(c, err, http.StatusInternalServerError) {
 		return
 	} else if isRunning {
 		response.HandleError(c, pufferpanel.ErrBackupServerRunning, http.StatusBadRequest)

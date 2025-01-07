@@ -1069,10 +1069,8 @@ func deleteBackup(c *gin.Context) {
 	bs := &services.Backup{DB: db}
 	node := &server.Node
 
-	var err error
-	var backupId uint
-	if backupId, err = cast.ToUintE(c.Param("backupId")); err != nil {
-		response.HandleError(c, err, http.StatusBadRequest)
+	backupId, err := cast.ToUintE(c.Param("backupId"))
+	if response.HandleError(c, err, http.StatusBadRequest) {
 		return
 	}
 
@@ -1121,10 +1119,8 @@ func restoreBackup(c *gin.Context) {
 	bs := &services.Backup{DB: db}
 	node := &server.Node
 
-	var err error
-	var backupId uint
-	if backupId, err = cast.ToUintE(c.Param("backupId")); err != nil {
-		response.HandleError(c, err, http.StatusBadRequest)
+	backupId, err := cast.ToUintE(c.Param("backupId"))
+	if response.HandleError(c, err, http.StatusBadRequest) {
 		return
 	}
 
@@ -1168,10 +1164,8 @@ func downloadBackup(c *gin.Context) {
 	bs := &services.Backup{DB: db}
 	node := &server.Node
 
-	var err error
-	var backupId uint
-	if backupId, err = cast.ToUintE(c.Param("backupId")); err != nil {
-		response.HandleError(c, err, http.StatusBadRequest)
+	backupId, err := cast.ToUintE(c.Param("backupId"))
+	if response.HandleError(c, err, http.StatusBadRequest) {
 		return
 	}
 
