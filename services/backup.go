@@ -10,7 +10,7 @@ type Backup struct {
 	DB *gorm.DB
 }
 
-func (bs *Backup) GetAllBakcupsForServer(serverID string) ([]*models.Backup, error) {
+func (bs *Backup) GetAllBackupsForServer(serverID string) ([]*models.Backup, error) {
 	var records []*models.Backup
 	query := bs.DB
 	query = query.Where(&models.Backup{ServerID: serverID})

@@ -1000,7 +1000,7 @@ func getBackups(c *gin.Context) {
 	db := middleware.GetDatabase(c)
 	bs := &services.Backup{DB: db}
 
-	records, err := bs.GetAllBakcupsForServer(server.Identifier)
+	records, err := bs.GetAllBackupsForServer(server.Identifier)
 
 	if response.HandleError(c, err, http.StatusInternalServerError) {
 	} else {
