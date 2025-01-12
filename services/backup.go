@@ -23,10 +23,10 @@ func (bs *Backup) GetAllBackupsForServer(serverID string) ([]*models.Backup, err
 	return records, err
 }
 
-func (bs *Backup) GetById(id uint) (*models.Backup, error) {
+func (bs *Backup) GetForSeverById(id uint, serverId string) (*models.Backup, error) {
 	var record *models.Backup
 	query := bs.DB
-	query = query.Where(&models.Backup{ID: id})
+	query = query.Where(&models.Backup{ID: id, ServerID: serverId})
 
 	err := query.First(&record).Error
 	if err != nil {

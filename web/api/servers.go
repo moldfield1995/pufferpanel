@@ -112,10 +112,11 @@ func registerServers(g *gin.RouterGroup) {
 
 	g.GET("/:serverId/backup", middleware.RequiresPermission(scopes.ScopeServerBackupView), middleware.ResolveServerPanel, getBackups)
 	g.OPTIONS("/:serverId/backup", response.CreateOptions("GET"))
+	g.GET("/:serverId/backup/:backupId", middleware.RequiresPermission(scopes.ScopeServerBackupView), middleware.ResolveServerPanel, getBackup)
+	g.DELETE("/:serverId/backup/:backupId", middleware.RequiresPermission(scopes.ScopeServerBackupDelete), middleware.ResolveServerPanel, deleteBackup)
+	g.OPTIONS("/:serverId/backup/:backupId", response.CreateOptions("GET", "DELETE"))
 	g.POST("/:serverId/backup/create", middleware.RequiresPermission(scopes.ScopeServerBackupCreate), middleware.ResolveServerPanel, createBackup)
 	g.OPTIONS("/:serverId/backup/create", response.CreateOptions("POST"))
-	g.DELETE("/:serverId/backup/:backupId", middleware.RequiresPermission(scopes.ScopeServerBackupDelete), middleware.ResolveServerPanel, deleteBackup)
-	g.OPTIONS("/:serverId/backup/:backupId", response.CreateOptions("DELETE"))
 	g.POST("/:serverId/backup/restore/:backupId", middleware.RequiresPermission(scopes.ScopeServerBackupRestore), middleware.ResolveServerPanel, restoreBackup)
 	g.OPTIONS("/:serverId/backup/restore/:backupId", response.CreateOptions("POST"))
 	g.GET("/:serverId/backup/download/:backupId", middleware.RequiresPermission(scopes.ScopeServerBackupView), middleware.ResolveServerPanel, downloadBackup)
@@ -1008,6 +1009,30 @@ func getBackups(c *gin.Context) {
 	}
 }
 
+// @Summary Gets a spersific backup on a server
+// @Description Gets a spersific backup made on this server
+// @Success 200 {object} models.Backup
+// @Param id path string true "Server ID"
+// @Param backupId path string true "BackupId"
+// @Router /api/servers/{id}/backup/{backupId} [get]
+// @Security OAuth2Application[server.backup.view]
+func getBackup(c *gin.Context) {
+	server := getServerFromGin(c)
+	db := middleware.GetDatabase(c)
+	bs := &services.Backup{DB: db}
+	backupId, err := cast.ToUintE(c.Param("backupId"))
+	if response.HandleError(c, err, http.StatusBadRequest) {
+		return
+	}
+
+	records, err := bs.GetForSeverById(backupId, server.Identifier)
+
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+	} else {
+		c.JSON(http.StatusOK, records)
+	}
+}
+
 // @Summary Create backup
 // @Description Creates a full backup of the server
 // @Success 204 {object} nil
@@ -1074,7 +1099,7 @@ func deleteBackup(c *gin.Context) {
 		return
 	}
 
-	backup, err := bs.GetById(backupId)
+	backup, err := bs.GetForSeverById(backupId, server.Identifier)
 	if response.HandleError(c, err, http.StatusInternalServerError) {
 		return
 	}
@@ -1124,7 +1149,7 @@ func restoreBackup(c *gin.Context) {
 		return
 	}
 
-	backup, err := bs.GetById(backupId)
+	backup, err := bs.GetForSeverById(backupId, server.Identifier)
 	if response.HandleError(c, err, http.StatusInternalServerError) {
 		return
 	}
@@ -1169,7 +1194,7 @@ func downloadBackup(c *gin.Context) {
 		return
 	}
 
-	backup, err := bs.GetById(backupId)
+	backup, err := bs.GetForSeverById(backupId, server.Identifier)
 	if response.HandleError(c, err, http.StatusInternalServerError) {
 		return
 	}
